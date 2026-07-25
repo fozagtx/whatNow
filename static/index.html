@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en" data-theme="mouve-light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why Did It Break?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&family=Fraunces:ital,opsz,wght@0,9..144,500..650;1,9..144,500..650&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/themes.css">
+<style>
+  :root {
+    --accent: #7c3aed; --accent-deep: #6d28d9;
+    --surface: #ffffff; --page: #faf9fc;
+    --tint-50: #f5f3ff; --tint-100: #ede9fe; --tint-border: #ddd6fe;
+    --text: #1e1b2e; --muted: #6f6a80; --hairline: #e9e6f2;
+    --ok-bg: #e8f7ef; --ok-fg: #0e793c;
+    --warn-bg: #fdf4dc; --warn-fg: #936316;
+    --bad-bg: #fde8e8; --bad-fg: #c20e12;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  :root {
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "Inter", -apple-system, "Segoe UI", sans-serif;
+  }
+  body {
+    background: var(--page); color: var(--text);
+    font: 15px/1.6 var(--font-body);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 28px 20px 64px; }
+
+  /* top bar */
+  .bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 56px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+  .mark {
+    width: 30px; height: 30px; border-radius: 9px; color: #fff;
+    display: grid; place-items: center; font-size: 16px; font-weight: 800;
+    background-color: var(--accent);
+    background-image: linear-gradient(180deg, rgb(255 255 255 / .25) 0%, transparent 48%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .35), 0 1px 2px rgb(109 40 217 / .2), 0 4px 10px rgb(109 40 217 / .18);
+    border: 1px solid rgb(109 40 217 / .4);
+  }
+  .bar a {
+    color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600;
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--hairline); background: var(--surface);
+  }
+  .bar a:hover { color: var(--accent-deep); border-color: var(--tint-border); }
+
+  /* hero — display face, large only */
+  h1 {
+    font-family: var(--font-display);
+    font-size: 40px; font-weight: 560; letter-spacing: -0.015em; line-height: 1.12;
+    max-width: 18ch;
+  }
+  h1 em { font-style: italic; color: var(--accent-deep); }
+  .sub { color: var(--muted); margin: 12px 0 32px; max-width: 52ch; }
+
+  /* suggestion chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    font: 600 13px/1 "Inter", sans-serif; color: var(--accent-deep);
+    background: var(--tint-50); border: 1px solid var(--tint-border);
+    padding: 8px 14px; border-radius: 999px; cursor: pointer; transition: background .12s;
+  }
+  .chip:hover { background: var(--tint-100); }
+  .chip:active { box-shadow: inset 0 2px 4px rgb(15 23 42 / .12); }
+
+  /* composer */
+  form { display: flex; gap: 10px; }
+  input {
+    flex: 1; background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 999px; padding: 14px 20px; color: var(--text); font-size: 15px;
+    box-shadow: 0 1px 2px rgb(30 27 46 / .04);
+  }
+  input::placeholder { color: #a49eb5; }
+  input:focus { outline: none; border-color: var(--tint-border); box-shadow: 0 0 0 3px var(--tint-100); }
+  button.bg-primary {
+    border: 0; border-radius: 999px; padding: 0 26px; cursor: pointer;
+    color: #fff; font: 700 15px "Inter", sans-serif;
+  }
+  button.bg-primary:active { filter: brightness(.96); }
+  button.bg-primary:disabled { opacity: .55; cursor: wait; }
+
+  /* answer card */
+  .card {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 20px; padding: 26px; margin-top: 28px;
+    box-shadow: 0 1px 2px rgb(30 27 46 / .04), 0 12px 32px rgb(109 40 217 / .07);
+  }
+  .label {
+    font-size: 11.5px; font-weight: 650; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); margin: 24px 0 8px;
+  }
+  .label:first-child { margin-top: 0; }
+  #root, #fix { max-width: 65ch; }
+
+  .evidence {
+    background: var(--tint-50); border: 1px solid var(--tint-border);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px; margin: 8px 0; border-radius: 12px;
+  }
+  .evidence .meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .evidence a { color: var(--accent-deep); font-weight: 600; font-size: 13px; text-decoration: none; }
+  .evidence a:hover { text-decoration: underline; }
+
+  .badge {
+    display: inline-block; padding: 4px 12px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; text-transform: capitalize;
+  }
+  .badge.high { background: var(--ok-bg); color: var(--ok-fg); }
+  .badge.medium { background: var(--warn-bg); color: var(--warn-fg); }
+  .badge.low { background: var(--bad-bg); color: var(--bad-fg); }
+
+  /* loading state */
+  .load-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; font-weight: 600; }
+  .load-row .timer { margin-left: auto; color: var(--muted); font-weight: 500; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .pulse {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 0 rgb(124 58 237 / .45); animation: pulse 1.3s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgb(124 58 237 / .45); }
+    70% { box-shadow: 0 0 0 12px rgb(124 58 237 / 0); }
+    100% { box-shadow: 0 0 0 0 rgb(124 58 237 / 0); }
+  }
+  .skel {
+    height: 13px; border-radius: 8px; margin: 12px 0;
+    background: linear-gradient(90deg, var(--tint-100) 25%, var(--tint-50) 50%, var(--tint-100) 75%);
+    background-size: 200% 100%; animation: shimmer 1.4s linear infinite;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  #trail { margin: 6px 0 0 18px; color: var(--muted); font-size: 13px; }
+  #trail li { margin: 4px 0; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 16px; }
+  .hidden { display: none; }
+
+  /* auto-investigated alerts */
+  #incidents h2 {
+    font-family: var(--font-display); font-style: italic;
+    font-size: 20px; font-weight: 560; margin: 44px 0 12px;
+  }
+  .incident {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 14px; padding: 14px 18px; margin: 10px 0;
+    box-shadow: 0 1px 2px rgb(30 27 46 / .04);
+  }
+  .incident .when { color: var(--muted); font-size: 12px; float: right; }
+  .incident .alert-name { font-weight: 700; font-size: 14px; }
+  .incident .cause { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="brand"><span class="mark">?</span> Why Did It Break?</div>
+    <a href="__SIGNOZ_URL__" target="_blank" rel="noopener">Open SigNoz ↗</a>
+  </div>
+
+  <h1>Ask your app <em>what happened</em> to it.</h1>
+  <p class="sub">Plain-English root cause analysis over your live traces. Every answer comes with proof.</p>
+
+  <div class="chips">
+    <button class="chip" type="button">why are ride dispatches slow?</button>
+    <button class="chip" type="button">are there any errors right now?</button>
+    <button class="chip" type="button">what should I fix first?</button>
+  </div>
+
+  <form id="form">
+    <input id="q" placeholder="Ask anything about your system…" autocomplete="off" required>
+    <button id="go" class="bg-primary" type="submit">Ask</button>
+  </form>
+
+  <div id="loading" class="card hidden">
+    <div class="load-row">
+      <span class="pulse"></span>
+      <span id="load-text">Investigating: running live SigNoz queries…</span>
+      <span class="timer" id="load-timer">0s</span>
+    </div>
+    <div class="skel" style="width: 84%"></div>
+    <div class="skel" style="width: 61%"></div>
+    <div class="skel" style="width: 73%"></div>
+  </div>
+
+  <div id="result" class="card hidden">
+    <div class="label">Root cause</div>
+    <div id="root"></div>
+    <div class="label">Evidence</div>
+    <div id="evidence"></div>
+    <div class="label">Suggested fix</div>
+    <div id="fix"></div>
+    <div class="label">Confidence</div>
+    <span id="conf" class="badge"></span>
+    <div class="label">Agent investigation</div>
+    <ol id="trail"></ol>
+    <div id="hint" class="hint"></div>
+  </div>
+
+  <div id="incidents" class="hidden">
+    <h2>Auto-investigated alerts</h2>
+    <div id="incident-list"></div>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById("form");
+const go = document.getElementById("go");
+const q = document.getElementById("q");
+
+document.querySelectorAll(".chip").forEach((chip) =>
+  chip.addEventListener("click", () => { q.value = chip.textContent; form.requestSubmit(); }));
+
+const LOAD_STEPS = [
+  "Investigating: running live SigNoz queries…",
+  "Reading the slowest spans and recent errors…",
+  "Cross-checking suspect traces…",
+  "Writing up the root cause…",
+];
+let loadTimers = [];
+
+function startLoading() {
+  document.getElementById("result").classList.add("hidden");
+  const box = document.getElementById("loading");
+  box.classList.remove("hidden");
+  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  const t0 = Date.now();
+  let step = 0;
+  document.getElementById("load-text").textContent = LOAD_STEPS[0];
+  loadTimers = [
+    setInterval(() => {
+      document.getElementById("load-timer").textContent = Math.round((Date.now() - t0) / 1000) + "s";
+    }, 1000),
+    setInterval(() => {
+      step = Math.min(step + 1, LOAD_STEPS.length - 1);
+      document.getElementById("load-text").textContent = LOAD_STEPS[step];
+    }, 7000),
+  ];
+}
+
+function stopLoading() {
+  loadTimers.forEach(clearInterval);
+  loadTimers = [];
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("load-timer").textContent = "0s";
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  go.disabled = true; go.textContent = "Thinking…";
+  startLoading();
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: q.value }),
+    });
+    render(await res.json());
+  } catch (err) {
+    render({ answer: { root_cause: "Request failed: " + err, evidence: [], suggested_fix: "", confidence: "low" } });
+  } finally {
+    stopLoading();
+    go.disabled = false; go.textContent = "Ask";
+  }
+});
+
+function render(data) {
+  if (data.error) {
+    data = { answer: { root_cause: data.error, evidence: [], suggested_fix: "Fix the configuration above, then ask again.", confidence: "low" } };
+  }
+  const a = data.answer || {};
+  document.getElementById("root").textContent = a.root_cause || "No answer.";
+  document.getElementById("fix").textContent = a.suggested_fix || "none";
+
+  const conf = document.getElementById("conf");
+  conf.textContent = a.confidence || "low";
+  conf.className = "badge " + (a.confidence || "low");
+
+  const ev = document.getElementById("evidence");
+  ev.innerHTML = "";
+  (a.evidence || []).forEach((item) => {
+    const div = document.createElement("div");
+    div.className = "evidence";
+    const link = item.trace_url
+      ? ` · <a href="${item.trace_url}" target="_blank" rel="noopener">view trace ↗</a>` : "";
+    div.innerHTML =
+      `<div><strong>${esc(item.service || "?")}</strong> · ${esc(item.span || "")}</div>` +
+      `<div class="meta">${esc(item.detail || "")}${link}</div>`;
+    ev.appendChild(div);
+  });
+  if (!(a.evidence || []).length) ev.textContent = "none";
+
+  const trail = document.getElementById("trail");
+  trail.innerHTML = "";
+  (data.investigation || []).forEach((step) => {
+    const li = document.createElement("li");
+    li.textContent = `${step.tool}(${fmtArgs(step.args)})`;
+    trail.appendChild(li);
+  });
+  document.getElementById("hint").textContent = (data.investigation || []).length
+    ? `${data.investigation.length} live SigNoz queries, chosen by the agent, not hardcoded.`
+    : "";
+
+  document.getElementById("result").classList.remove("hidden");
+  document.getElementById("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function fmtArgs(args) {
+  if (args == null) return "";
+  if (typeof args === "string") return args;
+  return Object.entries(args)
+    .filter(([, v]) => v != null)
+    .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+    .join(", ");
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function loadIncidents() {
+  try {
+    const items = await (await fetch("/api/incidents")).json();
+    if (!items.length) return;
+    const list = document.getElementById("incident-list");
+    list.innerHTML = "";
+    items.forEach((inc) => {
+      const div = document.createElement("div");
+      div.className = "incident";
+      div.innerHTML =
+        `<span class="when">${esc((inc.received_at || "").replace("T", " ").replace("+00:00", " UTC"))}</span>` +
+        `<div class="alert-name">🚨 ${esc(inc.alert || "alert")}</div>` +
+        `<div class="cause">${esc((inc.answer || {}).root_cause || "")}</div>`;
+      list.appendChild(div);
+    });
+    document.getElementById("incidents").classList.remove("hidden");
+  } catch (e) { /* incidents feed is optional */ }
+}
+loadIncidents();
+setInterval(loadIncidents, 30000);
+</script>
+</body>
+</html>
